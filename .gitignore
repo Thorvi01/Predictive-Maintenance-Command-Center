@@ -1,0 +1,31 @@
+# Secrets — never commit API keys
+.env
+
+# NASA dataset txt files — download directly from NASA
+data/raw/*.txt
+
+# Generated files — recreated by running the pipeline
+data/processed/
+models/*.pt
+models/*.pkl
+rag/index/
+mlruns/
+logs/drift_reports/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Environments
+venv/
+.conda/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Pytest cache
+.pytest_cache/
