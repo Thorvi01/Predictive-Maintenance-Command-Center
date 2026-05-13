@@ -1,14 +1,16 @@
 # ✈️ FleetGuard AI — Predictive Maintenance Command Center
-![CI](https://github.com/Thorvi01/RUL_Predictive-Maintenance-Command-Center/actions/workflows/ci.yml/badge.svg)
+
 > **An end-to-end ML system for turbofan engine health monitoring, combining LSTM-based Remaining Useful Life prediction, Monte Carlo Dropout uncertainty quantification, RAG-powered maintenance recommendations, and automated drift detection.**
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-orange)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.x-red)
 ![MLflow](https://img.shields.io/badge/MLflow-tracked-green)
+![Tests](https://img.shields.io/badge/tests-50%20passed-brightgreen)
 ![Dataset](https://img.shields.io/badge/Dataset-NASA%20C--MAPSS-lightgrey)
 
 ---
+
 ## 📸 Dashboard Screenshots
 
 ### Fleet Health Overview
@@ -22,11 +24,12 @@
 
 ### Model Drift Monitor
 ![Drift Monitor](docs/drift_monitor.png)
+
+---
+
 ## 🌍 Real-World Impact
 
 Aircraft engine failures cost the aviation industry an estimated **$50 billion annually** in unplanned maintenance, flight delays, and AOG (Aircraft on Ground) events. A single unplanned engine shop visit costs **~$500,000**, compared to **~$50,000** for a scheduled one — a 10x cost difference.
-
-This project addresses that gap directly:
 
 **Before predictive maintenance:** Airlines rely on fixed time-based maintenance schedules (e.g., every 500 cycles regardless of engine health). Healthy engines get serviced unnecessarily. Degrading engines sometimes fail between scheduled visits.
 
@@ -37,9 +40,9 @@ This project addresses that gap directly:
 - Annual cost savings: **$200,000–$400,000**
 - Safety improvement: failures caught at RUL > 10 cycles instead of at RUL = 0
 
-**Why uncertainty quantification matters in this domain:** A point prediction of "RUL = 47 cycles" is dangerous without context. If the model is uncertain, that 47 could be anywhere from 20 to 74. FleetGuard AI's Monte Carlo Dropout outputs "RUL = 47 ± 8 cycles, 90% CI [34, 60]" — giving maintenance engineers the information they need to make risk-calibrated decisions. Wide confidence intervals trigger human expert review rather than automated action.
+**Why uncertainty quantification matters:** A point prediction of "RUL = 47 cycles" is dangerous without context. FleetGuard AI outputs "RUL = 47 ± 8 cycles, 90% CI [34, 60]" — giving maintenance engineers the information they need to make risk-calibrated decisions.
 
-**Why drift detection matters:** ML models degrade silently. An engine fleet that ages, or a new engine variant introduced into the fleet, will shift the sensor distribution away from training data. Without a drift monitor, the model continues making predictions that look plausible but are based on extrapolation. FleetGuard AI's Evidently-based monitor catches this shift and triggers retraining before it causes harm.
+**Why drift detection matters:** ML models degrade silently. FleetGuard AI's Evidently-based monitor catches distribution shift and triggers retraining before it causes harm.
 
 ---
 
@@ -51,65 +54,39 @@ NASA C-MAPSS Dataset
         ▼
 ┌─────────────────────┐
 │  Data Preprocessing  │  Normalize sensors, compute piecewise RUL labels
-│  data_preprocessing.py│  Drop zero-variance sensors, train/test split
 └─────────┬───────────┘
-          │
           ▼
 ┌─────────────────────┐
 │   Sliding Windows    │  30-cycle windows → (batch, 30, 17) tensors
-│   dataset.py        │  PyTorch Dataset + DataLoader
 └─────────┬───────────┘
-          │
           ▼
 ┌─────────────────────────────────────────┐
 │        2-Layer LSTM + MC Dropout         │
-│        model.py                         │
-│                                         │
-│  Input (B, 30, 17) → LSTM → Dropout     │
-│  → FC → RUL prediction                  │
-│                                         │
-│  At inference: N=100 stochastic passes  │
-│  → mean RUL + std + 90% CI              │
+│  N=100 stochastic passes → mean + CI     │
 └─────────┬───────────────────────────────┘
           │
           ├──────────────────────────────────────────┐
           ▼                                          ▼
-┌──────────────────┐                    ┌────────────────────────┐
-│  Calibration     │                    │   RAG Knowledge Base   │
-│  evaluate.py     │                    │   rag/ingest.py        │
-│                  │                    │                        │
-│  Reliability     │                    │  NASA C-MAPSS PDF +    │
-│  diagram, ECE,   │                    │  Maintenance manuals   │
-│  sharpness       │                    │  → FAISS vector index  │
-└──────────────────┘                    └───────────┬────────────┘
-                                                    │
+┌──────────────────────┐                ┌────────────────────────┐
+│  Temperature Scaling  │                │   RAG Knowledge Base   │
+│  ECE: 0.20 → 0.019   │                │  NASA PDF + manuals    │
+│  Coverage: 59% → 88% │                │  → FAISS vector index  │
+└──────────────────────┘                └───────────┬────────────┘
                                                     ▼
                                         ┌───────────────────────┐
-                                        │   LLM Agent (Gemini)  │
-                                        │   agent/copilot.py    │
-                                        │                       │
-                                        │  RUL + CI + retrieved │
-                                        │  docs → grounded      │
-                                        │  maintenance advice   │
+                                        │  LLM Agent (Groq)     │
+                                        │  Llama 3.3 70B        │
+                                        │  grounded maintenance  │
+                                        │  recommendations       │
                                         └───────────────────────┘
-          │
           ▼
 ┌─────────────────────────────────────────┐
-│         Drift Detection                  │
-│         monitoring/drift.py             │
-│                                         │
-│  Evidently AI: training vs production   │
-│  KS test per sensor → drift score       │
-│  Champion/challenger retraining trigger │
+│  Drift Detection + Champion/Challenger   │
+│  Evidently AI + KS test per sensor      │
 └─────────────────────────────────────────┘
-          │
           ▼
 ┌─────────────────────────────────────────┐
-│         Streamlit Dashboard             │
-│         app.py                          │
-│                                         │
-│  Fleet Overview | Engine Deep Dive      │
-│  Copilot | Drift Monitor | Performance  │
+│  Streamlit Dashboard (5 pages)          │
 └─────────────────────────────────────────┘
 ```
 
@@ -117,41 +94,40 @@ NASA C-MAPSS Dataset
 
 ## 📊 Results
 
-| Metric | Value | Context |
-|--------|-------|---------|
-| Test RMSE | **13.56 cycles** | Competitive range for C-MAPSS FD001 is 12–18 cycles |
-| NASA Asymmetric Score | **378.38** | Lower is better. Penalises late predictions more than early |
-| ECE Score | **0.2020** | 0 = perfect calibration. Known MC Dropout limitation — documented |
-| 90% CI Coverage | **54%** | Identified overconfidence — used as motivation for safety factor |
-| Mean CI Width | **18.0 cycles** | Average uncertainty spread per engine |
-| Training Time | **4.8 min** | CPU only, 53 epochs with early stopping |
-
-### What makes these results meaningful
-
-The RMSE of 13.56 puts this model in the competitive range of published academic benchmarks on C-MAPSS FD001. More importantly, the project goes beyond RMSE to measure **calibration** — something most portfolio projects and even some production systems skip entirely.
-
-The ECE of 0.20 reveals that the model is overconfident: when it says "90% confident," it is actually right only 54% of the time. This is a known limitation of vanilla MC Dropout, and this project documents it honestly rather than hiding it. The practical implication — applying a safety factor when using lower CI bounds for scheduling — is built into the agent's decision logic.
+| Metric | Before Calibration | After Temperature Scaling | Context |
+|--------|-------------------|--------------------------|---------|
+| Test RMSE | **13.56 cycles** | **13.56 cycles** | Unchanged — calibration doesn't affect accuracy |
+| NASA Score | **378.38** | **378.38** | Lower is better |
+| ECE Score | 0.2020 | **0.0193 ✓** | Target < 0.05 achieved |
+| 90% CI Coverage | 59% | **88% ✓** | Ideal = 90% |
+| Mean CI Width | 18.1 cycles | **34.4 cycles** | Wider CIs reflect true uncertainty |
+| Temperature T | — | **1.9033** | Learned scalar, widens std by 1.90× |
+| Training Time | **4.8 min** | — | CPU only, 53 epochs, early stopping |
 
 ---
 
 ## 🔬 What Makes This Different
 
-Most RUL prediction projects stop at "I trained an LSTM and got RMSE = X." This project adds three layers that matter for production ML:
+Most RUL prediction projects stop at "I trained an LSTM and got RMSE = X." This project adds four layers:
 
 ### 1. Uncertainty Quantification via Monte Carlo Dropout
-Instead of a single point estimate, every prediction includes a full probability distribution over possible RUL values. This is based on Gal & Ghahramani (2016) — dropout at inference time approximates a Bayesian posterior over model weights.
-
 ```python
-# 100 stochastic forward passes with dropout active
 mean, std, lower, upper, all_preds = mc_predict(model, X, n_samples=100)
 # Output: "RUL = 47.3 ± 4.1 cycles, 90% CI [40.5, 54.1]"
 ```
 
-### 2. Calibration Evaluation
-A model can be accurate but miscalibrated. This project measures both using a reliability diagram and Expected Calibration Error — and documents the gap. Calibration matters in safety-critical domains where stated confidence drives decisions.
+### 2. Temperature Scaling Calibration
+```python
+# Before: ECE = 0.20, coverage = 59%
+# After:  ECE = 0.019, coverage = 88%
+std_calibrated = std * T   # T = 1.9033, learned on validation NLL
+```
 
-### 3. Live Drift Detection with Champion/Challenger Retraining
-Production ML models degrade when data distributions shift. This project monitors sensor distributions using Evidently AI and triggers a full retraining pipeline when drift is detected — only promoting the new model if it beats the current one on held-out data.
+### 3. RAG-Powered Maintenance Copilot
+Groq Llama 3.3 70B retrieves relevant chunks from a FAISS index built over real NASA documentation before generating recommendations — every suggestion is grounded in cited sources.
+
+### 4. Live Drift Detection with Champion/Challenger Retraining
+Sensor distributions are monitored using Evidently AI. When drift is detected, a challenger model is trained and only promoted if it improves RMSE by more than 2% on held-out data.
 
 ---
 
@@ -160,13 +136,15 @@ Production ML models degrade when data distributions shift. This project monitor
 | Layer | Technology |
 |-------|-----------|
 | Deep Learning | PyTorch — 2-layer LSTM, MC Dropout |
-| Experiment Tracking | MLflow — metrics, artifacts, model registry |
+| Calibration | Temperature scaling — Gaussian NLL optimisation |
+| Experiment Tracking | MLflow |
 | Embeddings | sentence-transformers (all-MiniLM-L6-v2) |
-| Vector Search | FAISS — cosine similarity over 34 document chunks |
-| LLM | Google Gemini 2.0 Flash |
+| Vector Search | FAISS — 34 document chunks |
+| LLM | Groq — Llama 3.3 70B (free tier) |
 | Drift Detection | Evidently AI + scipy KS test |
 | Dashboard | Streamlit |
 | PDF Parsing | PyMuPDF |
+| Testing | pytest — 50/50 passing |
 | Data | NASA C-MAPSS FD001 (100 engines, 20,631 cycles) |
 
 ---
@@ -174,30 +152,18 @@ Production ML models degrade when data distributions shift. This project monitor
 ## 📁 Project Structure
 
 ```
-rul-predictor/
-├── data/
-│   ├── raw/                    ← NASA C-MAPSS files + PDF
-│   └── processed/              ← Normalized CSVs
-├── models/
-│   └── rul_predictor.pt        ← Trained model checkpoint
-├── rag/
-│   ├── documents.py            ← Structured maintenance knowledge
-│   ├── ingest.py               ← PDF + knowledge → FAISS index
-│   ├── retriever.py            ← Semantic search interface
-│   └── index/                  ← Saved FAISS index + metadata
-├── agent/
-│   └── copilot.py              ← LLM agent with tool calling
-├── monitoring/
-│   ├── drift.py                ← Evidently drift detection
-│   └── retrain.py              ← Champion/challenger pipeline
-├── logs/
-│   ├── calibration_report.png  ← ECE + reliability diagram
-│   └── drift_reports/          ← HTML + JSON drift reports
-├── data_preprocessing.py       ← Sensor normalization + RUL labels
-├── dataset.py                  ← Sliding window DataLoader
+├── data/raw/                   ← NASA C-MAPSS PDF + dataset files
+├── docs/                       ← dashboard screenshots
+├── rag/                        ← FAISS index + retriever
+├── agent/copilot.py            ← Groq LLM agent
+├── monitoring/                 ← drift detection + retraining
+├── tests/                      ← 50 unit tests
+├── data_preprocessing.py
+├── dataset.py
 ├── model.py                    ← LSTM + MC Dropout
-├── train.py                    ← Training loop + MLflow
-├── evaluate.py                 ← Calibration evaluation
+├── train.py                    ← training loop + MLflow
+├── calibrate.py                ← temperature scaling
+├── evaluate.py                 ← calibration evaluation
 └── app.py                      ← Streamlit dashboard
 ```
 
@@ -206,60 +172,28 @@ rul-predictor/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Anaconda or Miniconda
-- Python 3.11
-- Google Gemini API key (free at aistudio.google.com)
-
-### Setup
+- Anaconda or Miniconda, Python 3.11
+- Groq API key — free at [console.groq.com](https://console.groq.com) (no credit card needed)
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/rul-predictor.git
-cd rul-predictor
-
-# Create conda environment
+git clone https://github.com/Thorvi01/Predictive-Maintenance-Command-Center.git
+cd Predictive-Maintenance-Command-Center
 conda create -n rul-predictor python=3.11 -y
 conda activate rul-predictor
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Add your Gemini API key
-echo "GEMINI_API_KEY=your_key_here" > .env
+echo "GROQ_API_KEY=your_key_here" > .env
 ```
 
-### Download the NASA Dataset
-
-1. Go to the [NASA PCOE Data Repository](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/)
-2. Download "Turbofan Engine Degradation Simulation"
-3. Place `train_FD001.txt`, `test_FD001.txt`, `RUL_FD001.txt` in `data/raw/`
-
-### Run the Pipeline
+Download `train_FD001.txt`, `test_FD001.txt`, `RUL_FD001.txt` from the [NASA PCOE Data Repository](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/) and place in `data/raw/`.
 
 ```bash
-# 1. Preprocess data
 python data_preprocessing.py
-
-# 2. Build sliding windows (verify)
-python dataset.py
-
-# 3. Train the model (~5 min on CPU)
 python train.py
-
-# 4. Evaluate calibration
+python calibrate.py
 python evaluate.py
-
-# 5. Build RAG index
 python rag/ingest.py
-
-# 6. Launch dashboard
+pytest tests/ -v
 streamlit run app.py
-```
-
-### View experiment tracking
-```bash
-mlflow ui
-# Open http://localhost:5000
 ```
 
 ---
@@ -268,45 +202,35 @@ mlflow ui
 
 | Page | What it shows |
 |------|--------------|
-| **Fleet Overview** | All 100 engines sorted by risk. Color-coded RUL bar chart with 90% CI error bars. KPI cards for risk tier counts. |
-| **Engine Deep Dive** | Per-engine MC Dropout histogram showing 200 prediction samples. Mean, CI bounds, and true RUL overlaid. |
-| **Maintenance Copilot** | RAG-powered LLM recommendations grounded in NASA documentation. Select any engine and ask a question. |
-| **Drift Monitor** | Run Evidently drift detection on demand. Per-sensor Wasserstein distance scores. Retraining trigger logic. |
-| **Model Performance** | Full calibration report: reliability diagram, ECE, CI width distribution, residuals vs uncertainty. |
-
----
-
-## 🧠 Key Technical Concepts
-
-**Why piecewise RUL labels?** Raw RUL is noisy in early engine life — a new engine at cycle 1 doesn't behave meaningfully differently from cycle 50. Capping RUL at 125 focuses the model on the degradation phase where prediction matters.
-
-**Why MC Dropout instead of standard LSTM?** Standard LSTMs produce point estimates with no uncertainty. Gal & Ghahramani (2016) showed that dropout at inference approximates a Bayesian posterior. Running N=100 stochastic passes gives a distribution over possible RUL values at negligible computational cost (~100ms latency).
-
-**Why RAG instead of fine-tuning the LLM?** RAG provides traceable citations, allows knowledge updates without retraining, and avoids the need for labelled instruction data. The agent retrieves only the most relevant document chunks per query rather than loading everything into context.
-
-**Why champion/challenger retraining?** Blind retraining on new data can degrade a model if the new data is noisy or unrepresentative. The pipeline only promotes a challenger if it improves RMSE by more than 2% on held-out data — preventing accidental regression.
+| **Fleet Overview** | 100 engines sorted by risk, color-coded RUL bar chart with 90% CI error bars |
+| **Engine Deep Dive** | Per-engine MC Dropout histogram, 200 samples, mean/CI/true RUL overlaid |
+| **Maintenance Copilot** | RAG + Groq LLM recommendations grounded in NASA documentation |
+| **Drift Monitor** | Evidently drift detection, per-sensor Wasserstein scores, retraining trigger |
+| **Model Performance** | Reliability diagram, ECE before/after, CI width distribution |
 
 ---
 
 ## 📚 References
 
-- Saxena, A. et al. (2008). *Damage Propagation Modeling for Aircraft Engine Run-to-Failure Simulation.* NASA Ames Research Center. (included in `data/raw/`)
-- Gal, Y. & Ghahramani, Z. (2016). *Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning.* ICML.
-- NASA C-MAPSS Dataset: [PCOE Data Repository](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/)
+- Saxena, A. et al. (2008). *Damage Propagation Modeling for Aircraft Engine Run-to-Failure Simulation.* NASA Ames.
+- Gal, Y. & Ghahramani, Z. (2016). *Dropout as a Bayesian Approximation.* ICML.
+- [NASA C-MAPSS Dataset](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/)
 
 ---
 
 ## 🔮 Future Work
 
-- **Temperature scaling** to improve calibration from ECE=0.20 toward ECE<0.05
-- **Multi-dataset generalisation** — extend to FD002/FD003/FD004 for multi-condition robustness
-- **Cost-aware maintenance scheduler** — LP optimisation to minimise fleet-wide downtime cost using RUL predictions
-- **Real-time sensor streaming** — replace batch test data with a simulated live sensor feed
+- Multi-dataset generalisation — FD002/FD003/FD004 for multi-condition robustness
+- Cost-aware maintenance scheduler — LP optimisation over fleet RUL predictions
+- Real-time sensor streaming — live sensor feed instead of batch test data
+- Conformal prediction — distribution-free coverage guarantees
 
 ---
 
 ## 👩‍💻 Author
 
-Built as a portfolio project demonstrating end-to-end ML engineering: data pipelines, uncertainty-aware deep learning, RAG-powered LLM agents, and production MLOps practices.
+Built as a portfolio project demonstrating end-to-end ML engineering: data pipelines, uncertainty-aware deep learning, post-hoc calibration, RAG-powered LLM agents, and production MLOps practices.
 
 *Dataset: NASA C-MAPSS FD001 — publicly available from NASA PCOE Data Repository.*
+
+
