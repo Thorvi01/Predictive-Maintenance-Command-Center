@@ -9,7 +9,19 @@
 ![Dataset](https://img.shields.io/badge/Dataset-NASA%20C--MAPSS-lightgrey)
 
 ---
+## 📸 Dashboard Screenshots
 
+### Fleet Health Overview
+![Fleet Overview](docs/fleet_overview.png)
+
+### Engine Deep Dive — MC Dropout Distribution
+![Engine Deep Dive](docs/engine_deep_dive.png)
+
+### Maintenance Copilot — RAG-powered LLM Recommendations
+![Maintenance Copilot](docs/maintenance_copilot.png)
+
+### Model Drift Monitor
+![Drift Monitor](docs/drift_monitor.png)
 ## 🌍 Real-World Impact
 
 Aircraft engine failures cost the aviation industry an estimated **$50 billion annually** in unplanned maintenance, flight delays, and AOG (Aircraft on Ground) events. A single unplanned engine shop visit costs **~$500,000**, compared to **~$50,000** for a scheduled one — a 10x cost difference.
