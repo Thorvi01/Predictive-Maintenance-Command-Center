@@ -3,6 +3,7 @@
 
 # NASA dataset txt files — download directly from NASA
 data/raw/*.txt
+!data/raw/*.pdf
 
 # Generated files — recreated by running the pipeline
 data/processed/
